@@ -1,0 +1,33 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Build outputs
+build/
+*.dll
+
+# Game data
+renders/
+screenshots/
+screenshots_obs/
+out/
+out2/
+out_tamao/
+logs/
+
+# Large model files (download with: huggingface-cli download SmilingWolf/wd-swinv2-tagger-v3)
+models/wd-tagger/
+tags/
+
+# Misc test artifacts
+MartaCard.png
+create_marta_card.py
+create_test_card.py
+drive_item5_6.py
+kk_param_roundtrip_test.py
+rerun_run1.py
+calibrate.py
+build_kkrenderbridge.py
+kk-render-monitor.py
+test_card.png
+README.md
