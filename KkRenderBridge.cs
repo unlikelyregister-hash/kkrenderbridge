@@ -23,6 +23,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 using BepInEx;
 using KKAPI;
@@ -66,6 +67,19 @@ namespace KkRenderBridge
             _requestDir = Path.Combine(gameRoot, "render_requests");
             _monitor = new FileMonitor(_requestDir, OnNewRequest);
             Debug.Log("[KkRenderBridge] watching " + _requestDir);
+
+            // Probe MakerAPI for available methods (debug aid)
+            var makerType = typeof(KKAPI.Maker.MakerAPI);
+            var methods = makerType.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            foreach (var m in methods)
+            {
+                if (m.Name.ToLower().Contains("load") || m.Name.ToLower().Contains("navigate") || m.Name.ToLower().Contains("open"))
+                {
+                    string ps = "";
+                    foreach (var p in m.GetParameters()) ps += (ps.Length > 0 ? ", " : "") + p.ParameterType.Name + " " + p.Name;
+                    Debug.Log("[KkRenderBridge] MakerAPI: " + m.ReturnType.Name + " " + m.Name + "(" + ps + ")");
+                }
+            }
         }
 
         private void Update()
@@ -298,6 +312,71 @@ namespace KkRenderBridge
             return afterColon.Substring(valStart, valEnd - valStart);
         }
 
+        // ---- Auto-load character into Character Maker ----
+        // When the requested character isn't currently loaded in the Maker,
+        // attempt to load it via KKAPI's MakerAPI.LoadCharaFile.
+        // Returns true if the character was loaded or was already loaded.
+        private bool TryLoadCharacter(string characterPath)
+        {
+            if (!File.Exists(characterPath))
+            {
+                Debug.LogWarning("[KkRenderBridge] TryLoadCharacter: file not found: " + characterPath);
+                return false;
+            }
+
+            // Already loaded? Check via LastLoadedChaFile.
+            if (MakerAPI.InsideAndLoaded)
+            {
+                var lastLoaded = MakerAPI.LastLoadedChaFile;
+                // C# 5 compat — cast to object before null comparison
+                if ((object)lastLoaded != null)
+                {
+                    string lastPath = CharacterExtensions.GetSourceFilePath(lastLoaded);
+                    if (!string.IsNullOrEmpty(lastPath)
+                        && Path.GetFileName(lastPath).Equals(
+                            Path.GetFileName(characterPath), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true; // Already loaded
+                    }
+                }
+                // InsideAndLoaded but no tracked path (drag-drop) — render whatever is there
+                if (MakerAPI.GetCharacterControl() != null)
+                {
+                    return true; // Something is loaded, render it (don't overwrite drag-drop)
+                }
+            }
+
+            // Try to load via KKAPI - try multiple possible method names
+            try
+            {
+                Debug.Log("[KkRenderBridge] TryLoadCharacter: loading " + characterPath);
+                // Try NavigateToCharaFile first (KKAPI convention for opening a char file)
+                // NOTE: C# 5 compat — cast MethodInfo to object before comparing with null
+                var navigateMethod = typeof(MakerAPI).GetMethod("NavigateToCharaFile",
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
+                if ((object)navigateMethod != null)
+                {
+                    navigateMethod.Invoke(null, new object[] { characterPath });
+                    return true;
+                }
+                // Fallback: try LoadCharaFile
+                var loadMethod = typeof(MakerAPI).GetMethod("LoadCharaFile",
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
+                if ((object)loadMethod != null)
+                {
+                    loadMethod.Invoke(null, new object[] { characterPath });
+                    return true;
+                }
+                Debug.LogWarning("[KkRenderBridge] TryLoadCharacter: no load method found on MakerAPI");
+                return false;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[KkRenderBridge] TryLoadCharacter failed: " + e.Message);
+                return false;
+            }
+        }
+
         // ---- Render job ----
         private void RenderJob(RenderRequest req, string requestPath)
         {
@@ -315,8 +394,9 @@ namespace KkRenderBridge
                 // Note: MakerAPI.InsideAndLoaded may be false when a character is placed
                 // via drag-drop from the library (not through KKAPI's file-loading path).
                 // In that case, LastLoadedChaFile is null but GetCharacterControl() still
-                // returns the active ChaControl. If we're InsideAndLoaded, use the normal
-                // path check. If not, just check that a ChaControl is available.
+                // returns the active ChaControl. Also: InsideAndLoaded can be true with
+                // LastLoadedChaFile null (drag-drop into the Maker). In both drag-drop
+                // cases, skip path validation and render whatever is loaded.
                 if (!MakerAPI.InsideAndLoaded)
                 {
                     // Try to get ChaControl anyway — it might be available via drag-drop
@@ -332,21 +412,48 @@ namespace KkRenderBridge
                     return;
                 }
 
-                // Normal path: character was loaded through KKAPI's tracked path
+                // InsideAndLoaded is true — check if we have a tracked path
                 var lastLoaded = MakerAPI.LastLoadedChaFile;
-                string lastPath = lastLoaded != null
+                // C# 5 compat: Must cast to object before null-compare on any
+                // reflection-adjacent type (ChaFile is a KKAPI reference type).
+                // Direct refType!=null emits op_Inequality which Mono's C#5 lacks.
+                // Pattern: see lines ~127/130/141/144/150 in this file.
+                string lastPath = (object)lastLoaded != null
                     ? CharacterExtensions.GetSourceFilePath(lastLoaded) : null;
 
+                // Drag-drop into Character Maker: InsideAndLoaded=true but
+                // LastLoadedChaFile=null. Don't return early — fall through
+                // to auto-load below so we load the requested card.
+                if (string.IsNullOrEmpty(lastPath))
+                {
+                    var ctrlDrag = MakerAPI.GetCharacterControl();
+                    if (ctrlDrag == null)
+                    {
+                        WriteResponse(responsePath, false, null, "no character in Maker");
+                        return;
+                    }
+                    // Have a ctrl but no tracked path — fall through to auto-load
+                }
+
+                // Auto-load: if the wrong character is in the Maker, try to load
+                // the requested one automatically via KKAPI's MakerAPI.
                 if (string.IsNullOrEmpty(lastPath)
                     || !Path.GetFileName(lastPath).Equals(
                         Path.GetFileName(req.character_path), StringComparison.OrdinalIgnoreCase))
                 {
-                    WriteResponse(responsePath, false, null,
-                        "wrong character loaded. Expected: " + req.character_path
-                        + ", Got: " + (lastPath ?? "(none)"));
-                    Debug.LogWarning("[KkRenderBridge] wrong char: need " + req.character_path
-                        + ", loaded: " + (lastPath ?? "(none)"));
-                    return;
+                    // Try to auto-load the requested character
+                    bool loaded = TryLoadCharacter(req.character_path);
+                    if (!loaded)
+                    {
+                        WriteResponse(responsePath, false, null,
+                            "wrong character loaded AND auto-load failed. Expected: " + req.character_path
+                            + ", Got: " + (lastPath ?? "(none)"));
+                        Debug.LogWarning("[KkRenderBridge] wrong char AND load failed: need " + req.character_path
+                            + ", loaded: " + (lastPath ?? "(none)"));
+                        return;
+                    }
+                    // Successfully loaded — fall through to render
+                    Debug.Log("[KkRenderBridge] auto-loaded: " + req.character_path);
                 }
 
                 // Get the ChaControl
