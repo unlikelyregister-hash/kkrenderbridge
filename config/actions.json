@@ -1,0 +1,286 @@
+{
+  "_comment": "Calibrated UI automation coordinates for Koikatsu (1920x1080).",
+  "_calibration_method": "Recorded by user via record_coords.py — 11 points mapped to UI actions (2026-09-10 10:00:45).",
+  "_calibration_source": "config/recording_coords.json (user-recorded, 11 points)",
+  "title_to_char_maker": {
+    "description": "From title screen → Char Maker → Female",
+    "actions": [
+      {
+        "type": "click",
+        "x": 546,
+        "y": 665,
+        "button": "left",
+        "description": "Click 'Char Maker' on title screen (point_1: char maker)"
+      },
+      {
+        "type": "delay",
+        "ms": 2000,
+        "description": "Wait for sub-menu"
+      },
+      {
+        "type": "click",
+        "x": 291,
+        "y": 671,
+        "button": "left",
+        "description": "Click 'Female' on gender selection (point_2: female)"
+      },
+      {
+        "type": "delay",
+        "ms": 8000,
+        "description": "Wait for CM to load"
+      }
+    ]
+  },
+  "load_character": {
+    "description": "Open card selection, navigate to KKBridge, select card, load",
+    "actions": [
+      {
+        "type": "click",
+        "x": 75,
+        "y": 517,
+        "button": "left",
+        "description": "Click KKBridge cards section in sidebar (point_4: kkRenderBride cards section)"
+      },
+      {
+        "type": "delay",
+        "ms": 1000,
+        "description": "Wait for character list"
+      },
+      {
+        "type": "click",
+        "x": 506,
+        "y": 199,
+        "button": "left",
+        "description": "Click base1 card / KKBridge folder (point_5: base1 card)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for card grid"
+      },
+      {
+        "type": "click",
+        "x": 389,
+        "y": 687,
+        "button": "left",
+        "description": "Click on card in grid (point_6: load card)"
+      },
+      {
+        "type": "set_load_options",
+        "face": true,
+        "body": true,
+        "hair": true,
+        "character_info": true,
+        "clothing_sets": false,
+        "description": "Load face/body/hair/info, NOT clothes"
+      },
+      {
+        "type": "click",
+        "x": 1550,
+        "y": 920,
+        "button": "left",
+        "description": "Click 'Load' button (bottom-right) — UNCALIBRATED placeholder"
+      },
+      {
+        "type": "delay",
+        "ms": 3000,
+        "description": "Wait for card to load"
+      }
+    ]
+  },
+  "set_camera_preset": {
+    "description": "Select camera preset 1 from right Control Panel",
+    "actions": [
+      {
+        "type": "click",
+        "x": 1107,
+        "y": 513,
+        "button": "left",
+        "description": "Click Camera 1 preset (point_7: camera 1)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for camera move"
+      }
+    ]
+  },
+  "set_camera_preset_2": {
+    "description": "Select camera preset 2",
+    "actions": [
+      {
+        "type": "click",
+        "x": 1101,
+        "y": 545,
+        "button": "left",
+        "description": "Click Camera 2 preset (point_8: camera 2)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for camera move"
+      }
+    ]
+  },
+  "set_camera_preset_3": {
+    "description": "Select camera preset 3",
+    "actions": [
+      {
+        "type": "click",
+        "x": 1098,
+        "y": 569,
+        "button": "left",
+        "description": "Click Camera 3 preset (point_9: camera 3)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for camera move"
+      }
+    ]
+  },
+  "set_camera_preset_4": {
+    "description": "Select camera preset 4",
+    "actions": [
+      {
+        "type": "click",
+        "x": 1108,
+        "y": 597,
+        "button": "left",
+        "description": "Click Camera 4 preset (point_10: camera 4)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for camera move"
+      }
+    ]
+  },
+  "set_camera_preset_5": {
+    "description": "Select camera preset 5",
+    "actions": [
+      {
+        "type": "click",
+        "x": 1107,
+        "y": 623,
+        "button": "left",
+        "description": "Click Camera 5 preset (point_11: camera 5)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for camera move"
+      }
+    ]
+  },
+  "slider_list_tab": {
+    "description": "Open Slider List tab (UNCALIBRATED — needs recording)",
+    "actions": [
+      {
+        "type": "click",
+        "x": 75,
+        "y": 517,
+        "button": "left",
+        "description": "Click sidebar area (approximate from point_4: kkRenderBride cards section)"
+      },
+      {
+        "type": "delay",
+        "ms": 500,
+        "description": "Wait for slider panel"
+      }
+    ]
+  },
+  "adjust_slider": {
+    "description": "Adjust a slider value by dragging (UNCALIBRATED — needs recording)",
+    "actions": [
+      {
+        "type": "click",
+        "x": 389,
+        "y": 687,
+        "button": "left",
+        "description": "Click slider handle area (approximate from point_6: load card)"
+      },
+      {
+        "type": "drag",
+        "x": 389,
+        "y": 687,
+        "button": "left",
+        "description": "Drag to new value position (placeholder — same as click until calibrated)"
+      },
+      {
+        "type": "delay",
+        "ms": 200,
+        "description": "Wait for slider to settle"
+      }
+    ]
+  },
+  "save_character": {
+    "description": "Save character to file (UNCALIBRATED — needs recording)",
+    "actions": [
+      {
+        "type": "click",
+        "x": 312,
+        "y": 24,
+        "button": "left",
+        "description": "Click cards tab area (point_3: cards tab) — approximate for save/deleted"
+      },
+      {
+        "type": "delay",
+        "ms": 1000,
+        "description": "Wait for save dialog"
+      },
+      {
+        "type": "type_text",
+        "text": "calibrated_char",
+        "description": "Enter character name"
+      },
+      {
+        "type": "click",
+        "x": 1550,
+        "y": 920,
+        "button": "left",
+        "description": "Click Save/OK button — UNCALIBRATED placeholder"
+      },
+      {
+        "type": "delay",
+        "ms": 2000,
+        "description": "Wait for save"
+      }
+    ]
+  },
+  "close_character_maker": {
+    "description": "Close Character Maker → title screen (UNCALIBRATED — needs recording)",
+    "actions": [
+      {
+        "type": "click",
+        "x": 75,
+        "y": 517,
+        "button": "left",
+        "description": "Click close/back area (approximate from point_4: kkRenderBride cards section)"
+      },
+      {
+        "type": "delay",
+        "ms": 3000,
+        "description": "Wait for title screen"
+      }
+    ]
+  },
+  "trigger_render": {
+    "description": "Trigger render via KkRenderBridge plugin (file-based, not UI)",
+    "actions": [
+      {
+        "type": "command",
+        "command": "python",
+        "args": [
+          "scripts/kk-submit-render.py"
+        ],
+        "description": "Submit render request via plugin"
+      },
+      {
+        "type": "delay",
+        "ms": 15000,
+        "description": "Wait for render"
+      }
+    ]
+  }
+}
